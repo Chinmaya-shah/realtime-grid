@@ -86,6 +86,7 @@ export default function GridBoard({
   
   // Synchronous tracking of drag movement to prevent blocking clicks
   const hasMovedRef = useRef(false);
+  const clickStartTime = useRef(0);
   const mouseDownPos = useRef({ x: 0, y: 0 });
 
   // Track last updated tiles to trigger pulse animations
@@ -129,6 +130,7 @@ export default function GridBoard({
     setIsDragging(true);
     hasMovedRef.current = false;
     mouseDownPos.current = { x: e.clientX, y: e.clientY };
+    clickStartTime.current = Date.now();
     dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
   };
 
@@ -157,6 +159,7 @@ export default function GridBoard({
     hasMovedRef.current = false;
     const touch = e.touches[0];
     mouseDownPos.current = { x: touch.clientX, y: touch.clientY };
+    clickStartTime.current = Date.now();
     dragStart.current = { x: touch.clientX - offset.x, y: touch.clientY - offset.y };
   };
 
@@ -188,7 +191,8 @@ export default function GridBoard({
 
   // Handle tile click
   const handleTileClick = (tileId: string) => {
-    if (hasMovedRef.current) return; // Block click if user was panning/dragging
+    const duration = Date.now() - clickStartTime.current;
+    if (hasMovedRef.current || duration > 300) return; // Block click if user was panning/dragging or held down for too long
     onCapture(tileId);
   };
 
