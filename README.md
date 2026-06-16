@@ -1,8 +1,6 @@
-# 🎨 Real-Time Shared Board (Pixel Grid Sandbox)
+# 🎨 Pixel Board — Real-Time Shared Grid Sandbox
 
-A minimalist, high-fidelity real-time shared pixel board application matching the dark-slate-and-coral theme. Multiple players can capture cells/pixels on a 30x30 grid simultaneously, see changes instantly, track rankings on a live leaderboard, customize their profile nickname & colors, and see activity feed logs in real-time.
-
-Built as a modern full-stack application with a Next.js frontend and a Node.js/Express/Socket.io backend, styled using vanilla CSS for custom neumorphic elements.
+Pixel Board is a high-fidelity, real-time shared pixel board application where multiple online players can simultaneously capture cells on a 30x30 grid, customize their nicknames and board colors, view live leaderboard updates, and play across multiple custom rooms and game modes.
 
 ---
 
@@ -10,6 +8,87 @@ Built as a modern full-stack application with a Next.js frontend and a Node.js/E
 
 - **Frontend (Cloudflare Pages)**: [https://realtime-grid.pages.dev/](https://realtime-grid.pages.dev/)
 - **Backend (Hugging Face Spaces)**: [https://chinmayasha-realtime-grid-backend.hf.space](https://chinmayasha-realtime-grid-backend.hf.space)
+- **GitHub Repository**: [https://github.com/Chinmaya-shah/realtime-grid](https://github.com/Chinmaya-shah/realtime-grid)
+
+---
+
+## 🛠️ Tech Stack & Rationale
+
+### 1. Frontend: Next.js (React 19) & Vanilla CSS
+- **Why Next.js**: Provides a highly structured React environment with static page export (`output: "export"`), making it extremely easy to host on Cloudflare Pages with zero server costs.
+- **Why Vanilla CSS + Tailwind Custom Variables**: Created a custom **Neumorphic (Soft UI)** theme. Neumorphic styling relies on precise, dual shadow vectors (light and dark shadows casting from a virtual light source). Vanilla CSS utility classes combined with custom variables in `globals.css` provide maximum control over card shadows, embossed inputs, and dark/light mode transitions without bloating the runtime.
+
+### 2. Backend: Node.js, Express & Socket.io
+- **Why Socket.io**: Handled WebSockets with automatic reconnection, heartbeat/ping-pong checks, and room/namespace segmentation out-of-the-box. It provides an event-driven model suited for fast, bidirectional real-time updates.
+- **Why Node.js/Express**: Extremely fast event-driven I/O loop that handles thousands of concurrent WebSocket connections efficiently under a single thread.
+
+### 3. Database: SQLite3 with RAM caching
+- **Why SQLite**: SQLite is self-contained and stores data in a local file (`database.db`), removing dependencies on external database clusters (like Postgres).
+- **The RAM Cache Layer**: To solve file I/O latency under rapid clicks (e.g. 0.5s rapid fire mode), the server maintains an active memory-mapped cache (`Map`). Read requests are served instantly from RAM, while writes are handled asynchronously via SQLite, combining durability with sub-millisecond response times.
+
+---
+
+## 📡 Real-Time Synchronization Strategy
+
+We designed a bidirectional WebSocket events layer:
+
+```text
+  [ Client A ]                                   [ Client B ]
+        │                                              ▲
+        │ emit("tile:capture", { tileId })            │
+        ▼                                              │ broadcast("tile:updated")
+┌──────────────────────────────────────────────────┐   │
+│             Node.js Socket.io Server             │───┘
+├──────────────────────────────────────────────────┤
+│ 1. Validate Capture Cooldowns                    │
+│ 2. Check Player Color Uniqueness                 │
+│ 3. Update SQLite Database Table                  │
+│ 4. Sync Memory Cache Map                         │
+└──────────────────────────────────────────────────┘
+```
+
+1. **State Initialization**: Upon connecting, clients receive the `init:state` signal, loading the entire board grid, current active player coordinates, and chat history.
+2. **Dynamic Capture Sync**: When a player clicks a cell, they emit a `tile:capture` request. The server validates the cooldown, updates the SQLite store, and broadcasts a `tile:updated` signal to the room namespace.
+3. **Stale Closure Mitigations**: In React, state hooks evaluated inside asynchronous socket event handlers can suffer from stale closures (stale username/color). We solved this by using a mutable React Ref pointer (`currentUserRef`), ensuring that callbacks always read the latest user state.
+
+---
+
+## 🔒 Concurrency, Conflicts & Uniqueness
+
+### 1. Player Color Uniqueness
+- **Client-Side Lock**: Colors currently claimed by online users are mapped and disabled (rendered with a lock icon) in both the onboarding modal and customization panel.
+- **Server-Side Enforcement**: If a race condition occurs, the server checks the color against active users. If taken, it drops the update and emits a `color:rejected` signal to the client, which alerts the user and rolls back the change.
+
+### 2. Preoccupied Block Recoloring
+- When a user changes their color, the server runs an atomic update: `UPDATE tiles SET ownerColor = ? WHERE ownerName = ?`.
+- It updates the memory cache and broadcasts `tile:updated` events for all changed cells to the room. The board recolors instantly for all online users.
+
+### 3. Cooldown Lockouts
+- To prevent spam clicks or script captures, the server validates timestamps.
+- If a user clicks during their cooldown, the server rejects the request and sends a `capture:rejected` alert, triggering a local cooldown animation.
+
+---
+
+## 🎨 UI & UX Craftsmanship
+- **Clean Neumorphism**: Uses borderless card surfaces, dual-source drop shadows, and embossed input fields.
+- **Layout Stability**: Added `.scrollbar-stable` to prevent scrollbar rendering from shifting cards.
+- **No Accordions (Static Layout)**: Left sidebar sections (Profile, Statistics, Event Management, Missions, Game Modes, and Activity Console) are statically expanded to offer clear visual access.
+- **Activity Log Console**: Features a real-time feed styled as a sunken terminal console. Changed the terminal background to white in light mode and zinc in dark mode to blend with cards.
+
+---
+
+## 🎁 Implemented Bonus Features
+
+1. **Onboarding Modal**: A beautiful glassmorphic welcome overlay that forces new users to choose a unique color and nickname before playing.
+2. **Game Mode Events**: Support for custom rooms using generating codes.
+   - **Classic**: 5-second capture cooldowns.
+   - **Rapid Fire**: 0.5-second capture cooldowns.
+   - **Duo Battles**: Locked Team Red vs Team Blue.
+   - **Squad Wars**: 4-faction battle (Red, Blue, Green, Yellow).
+3. **Web Audio Sound Effects**: Generates 8-bit retro sound effects (capture, success, error, ready) dynamically on the fly using the browser's Web Audio API (zero external assets loaded).
+4. **Achievements & Missions**: Dynamic quest tracker that parses board coordinates in real time.
+5. **Leaderboard & Stats**: Tracks owned pixels and percentage domination.
+6. **Dark/Light Theme**: Theme transitions with a floating settings dropdown.
 
 ---
 
@@ -18,29 +97,27 @@ Built as a modern full-stack application with a Next.js frontend and a Node.js/E
 ```text
 realtime-grid/
 ├── backend/
-│   ├── README.md            # Hugging Face Space Metadata
-│   ├── Dockerfile           # HF Spaces Deployment Docker Configuration
-│   ├── database.db          # SQLite persisted file (auto-generated)
-│   ├── server.js            # Node.js / Express / Socket.io server
-│   ├── test-client.js       # Automated E2E verification test client
+│   ├── README.md            # HF Space configuration metadata
+│   ├── Dockerfile           # HF Spaces Node Docker configuration
+│   ├── database.db          # Persisted SQLite store
+│   ├── server.js            # Node / Express / Socket.io server logic
 │   └── package.json
 └── frontend/
     ├── src/
     │   ├── app/
-    │   │   ├── globals.css  # Neumorphic styling tokens & variables
+    │   │   ├── globals.css  # Neumorphic styling tokens & classes
     │   │   ├── layout.tsx
-    │   │   └── page.tsx     # Main application dashboard
+    │   │   └── page.tsx     # Application dashboard layout
     │   └── components/
-    │       ├── GridBoard.tsx     # Panning/Zooming cell board
-    │       ├── Leaderboard.tsx   # Ownership stats & online users
-    │       ├── ActivityLog.tsx   # Console feed for actions
-    │       ├── ProfileWidget.tsx # User customization & cooldown
-    │       ├── ChatWidget.tsx    # Live room-based chat
-    │       ├── EventWidget.tsx   # Custom room setup (Classic, Rapid, Duo, Squad)
+    │       ├── GridBoard.tsx     # Cell board (drag-gesture safe)
+    │       ├── Leaderboard.tsx   # Live rankings & active players
+    │       ├── ActivityLog.tsx   # Console feed for updates
+    │       ├── ProfileWidget.tsx # User customizer & color palette
+    │       ├── ChatWidget.tsx    # Live messaging layer
+    │       ├── EventWidget.tsx   # Private rooms & game modes
     │       ├── GameModesWidget.tsx # Description of game modes
-    │       ├── QuestsWidget.tsx  # Interactive user achievements
-    │       └── SoundManager.ts   # Web Audio synthesized sound effects
-    ├── next.config.ts       # Next.js Static Export Configuration
+    │       ├── QuestsWidget.tsx  # Dynamic achievements/missions
+    │       └── SoundManager.ts   # Web Audio synthesizer
     └── package.json
 ```
 
@@ -48,11 +125,7 @@ realtime-grid/
 
 ## 🛠️ Local Development
 
-### Prerequisites
-Make sure you have **Node.js** (v18+) and **NPM** installed.
-
-### 1. Backend Server Setup
-Navigate to the backend directory, install dependencies, and start the development server:
+### 1. Start Backend Server
 ```bash
 cd backend
 npm install
@@ -60,41 +133,10 @@ npm run dev
 # Server runs on http://localhost:5000
 ```
 
-To run E2E automated websocket tests:
-```bash
-node test-client.js
-```
-
-### 2. Frontend Next.js Setup
-Open a new terminal, navigate to the frontend directory, install dependencies, and start the Next.js dev server:
+### 2. Start Frontend App
 ```bash
 cd frontend
 npm install
 npm run dev
-# Frontend runs on http://localhost:3000
+# App runs on http://localhost:3000
 ```
-
----
-
-## 🎨 Key Features & Design Choices
-
-1. **Modern Neumorphism Aesthetics**: Borderless rectangular cards with soft 12px rounded corners that cleanly blend light and dark neumorphic shadows.
-2. **Layout Stability**: Left sidebar uses a stable scrollbar gutter to prevent layout shifts/shrinking when sections are expanded.
-3. **Web Audio Synthesized Audio**: Leverages the Web Audio API to synthesize custom 8-bit sound effects (capture sound, success chord, error buzzer, ready ding) dynamically on the client-side, eliminating external asset dependencies.
-4. **Multi-room Gameplay Modes**:
-   - **Classic**: 5-second cooldown per capture.
-   - **Rapid Fire**: 0.5-second cooldown for ultra-fast clicking.
-   - **Duo Battles**: Automated team color locking (Red vs Blue).
-   - **Squad Wars**: 4-faction clash (Red, Blue, Green, Yellow).
-5. **Interactive Quests**: Live achievements (First Conquest, Grid Dominator, Corner Conqueror, Center Strike, Double Agent) evaluated in real-time.
-6. **SQLite Database Persistence**: Database entries are saved to a SQLite database and cached in memory for zero-latency lookups, surviving server restarts.
-
----
-
-## ☁️ Deployment
-
-### Backend (Hugging Face Spaces)
-The backend is packaged into a Docker container. Hugging Face Spaces runs the container as a non-root user (UID `1000`/`node`). The `Dockerfile` has been explicitly configured to pre-create and set write permissions on the SQLite database so that the database is writeable on startup.
-
-### Frontend (Cloudflare Pages)
-Next.js is configured with `output: "export"` to build the frontend as a static site. The production build takes the environment variable `NEXT_PUBLIC_SOCKET_URL` (in this case `https://chinmayasha-realtime-grid-backend.hf.space`) and deploys to Cloudflare Pages.
