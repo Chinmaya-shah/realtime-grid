@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
 
 interface GridBoardProps {
@@ -88,6 +88,12 @@ export default function GridBoard({
   const hasMovedRef = useRef(false);
   const clickStartTime = useRef(0);
   const mouseDownPos = useRef({ x: 0, y: 0 });
+
+  // Keep a ref to the latest onCapture prop to prevent stale closures in GridCell memoization
+  const onCaptureRef = useRef(onCapture);
+  useEffect(() => {
+    onCaptureRef.current = onCapture;
+  }, [onCapture]);
 
   // Track last updated tiles to trigger pulse animations
   const [pulseTiles, setPulseTiles] = useState<Record<string, boolean>>({});
@@ -190,11 +196,11 @@ export default function GridBoard({
   };
 
   // Handle tile click
-  const handleTileClick = (tileId: string) => {
+  const handleTileClick = useCallback((tileId: string) => {
     const duration = Date.now() - clickStartTime.current;
     if (hasMovedRef.current || duration > 300) return; // Block click if user was panning/dragging or held down for too long
-    onCapture(tileId);
-  };
+    onCaptureRef.current(tileId);
+  }, []);
 
   // Generate 30x30 cells list
   const rows = 30;
