@@ -5,9 +5,10 @@ import { Gamepad2, Swords, UserPlus, Flame } from "lucide-react";
 
 interface GameModesWidgetProps {
   activeMode: string;
+  onSelectMode: (modeId: string) => void;
 }
 
-export default function GameModesWidget({ activeMode }: GameModesWidgetProps) {
+export default function GameModesWidget({ activeMode, onSelectMode }: GameModesWidgetProps) {
   const modes = [
     {
       id: "classic",
@@ -58,7 +59,8 @@ export default function GameModesWidget({ activeMode }: GameModesWidgetProps) {
           return (
             <div
               key={m.id}
-              className={`p-3 rounded-2xl border transition-all duration-300 flex gap-3 items-start ${
+              onClick={() => onSelectMode(m.id)}
+              className={`p-3 rounded-2xl border transition-all duration-300 flex gap-3 items-start cursor-pointer hover:scale-102 hover:border-secondary/35 active:scale-98 select-none ${
                 isActive
                   ? "border-secondary/40 bg-secondary/[0.03] scale-102 shadow-sm"
                   : "border-outline bg-surface/30 opacity-75 hover:opacity-100"

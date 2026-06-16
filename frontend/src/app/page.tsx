@@ -424,6 +424,14 @@ export default function Home() {
     }
   };
 
+  const handleSelectLobby = (modeId: string) => {
+    if (modeId === "classic") {
+      handleJoinRoom("global", "classic");
+    } else {
+      handleJoinRoom(`${modeId}-global`, modeId);
+    }
+  };
+
   const handleLeaveRoom = () => {
     if (socket) {
       socket.emit("room:join", { roomId: "global" });
@@ -545,7 +553,7 @@ export default function Home() {
         <QuestsWidget quests={quests} />
 
         {/* 4. Game Modes Selection Display */}
-        <GameModesWidget activeMode={gameMode} />
+        <GameModesWidget activeMode={gameMode} onSelectMode={handleSelectLobby} />
       </aside>
 
       {/* 2. CENTER PLAYGROUND - Fixed viewport on desktop */}
