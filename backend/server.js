@@ -118,7 +118,24 @@ function getUniqueRandomColor(activeUsersMap) {
 
 // Real-Time Socket Connections
 io.on("connection", (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
+  const ip = socket.handshake.address;
+
+  // Count concurrent connections from this IP address
+  let ipCount = 0;
+  for (const [_, client] of io.of("/").sockets) {
+    if (client.handshake.address === ip) {
+      ipCount++;
+    }
+  }
+
+  if (ipCount > 5) {
+    console.log(`Connection rejected: too many connections from IP ${ip}`);
+    socket.emit("error", "Too many connections from this IP address. Limit is 5.");
+    socket.disconnect(true);
+    return;
+  }
+
+  console.log(`Socket connected: ${socket.id} (IP: ${ip}, active: ${ipCount})`);
 
   // Create random user profile - initially in 'global' room
   const userId = Math.floor(100 + Math.random() * 900);
@@ -237,7 +254,20 @@ io.on("connection", (socket) => {
     const profile = activeUsers.get(socket.id);
     if (profile) {
       let updatedName = profile.username;
-      if (newName) updatedName = newName.trim().substring(0, 16);
+      if (newName) {
+        const trimmedName = newName.trim().substring(0, 16);
+        if (trimmedName.toLowerCase() !== profile.username.toLowerCase()) {
+          // Check if this username is already taken by another active user
+          const isNameTaken = Array.from(activeUsers.entries()).some(([id, u]) => {
+            return id !== socket.id && u.username.toLowerCase() === trimmedName.toLowerCase();
+          });
+          if (isNameTaken) {
+            socket.emit("profile:rejected", { reason: "name_taken", username: trimmedName });
+            return;
+          }
+        }
+        updatedName = trimmedName;
+      }
 
       let updatedColor = profile.color;
       if (newColor && newColor.toLowerCase() !== profile.color.toLowerCase()) {
@@ -314,7 +344,8 @@ io.on("connection", (socket) => {
     if (elapsed < COOLDOWN_MS) {
       socket.emit("capture:rejected", {
         reason: "cooldown",
-        timeLeft: Math.max(0.1, Math.ceil((COOLDOWN_MS - elapsed) / 100) / 10)
+        timeLeft: Math.max(0.1, Math.ceil((COOLDOWN_MS - elapsed) / 100) / 10),
+        tileId
       });
       return;
     }
@@ -327,7 +358,7 @@ io.on("connection", (socket) => {
     
     // Grid limits validation (30x30 board max)
     if (isNaN(x) || isNaN(y) || x < 0 || x >= 30 || y < 0 || y >= 30) {
-      socket.emit("capture:rejected", { reason: "out-of-bounds" });
+      socket.emit("capture:rejected", { reason: "out-of-bounds", tileId });
       return;
     }
 
@@ -348,7 +379,7 @@ io.on("connection", (socket) => {
       (err) => {
         if (err) {
           console.error("DB Save Error:", err.message);
-          socket.emit("capture:rejected", { reason: "database-error" });
+          socket.emit("capture:rejected", { reason: "database-error", tileId });
           return;
         }
 

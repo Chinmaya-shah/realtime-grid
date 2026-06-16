@@ -58,6 +58,7 @@ export default function Home() {
   const [hasOnboarded, setHasOnboarded] = useState(true);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [serverErrorMessage, setServerErrorMessage] = useState("");
+  const optimisticBackups = useRef<Map<string, { ownerName: string; ownerColor: string; capturedAt: number } | null>>(new Map());
 
   // Quests/Achievements state
   const [quests, setQuests] = useState<Quest[]>([
@@ -189,6 +190,33 @@ export default function Home() {
     newSocket.on("color:rejected", ({ reason, color }) => {
       if (reason === "taken") {
         setServerErrorMessage(`Color ${color.toUpperCase()} is already taken by another active player!`);
+        setHasOnboarded(false);
+        const cUser = currentUserRef.current;
+        if (cUser) {
+          localStorage.setItem("username", cUser.username);
+          localStorage.setItem("color", cUser.color);
+        } else {
+          localStorage.removeItem("username");
+          localStorage.removeItem("color");
+          localStorage.removeItem("has_onboarded");
+        }
+      }
+    });
+
+    // Handle profile update rejections (e.g. name taken)
+    newSocket.on("profile:rejected", ({ reason, username }) => {
+      if (reason === "name_taken") {
+        setServerErrorMessage(`The nickname "${username}" is already taken by another active player!`);
+        setHasOnboarded(false);
+        const cUser = currentUserRef.current;
+        if (cUser) {
+          localStorage.setItem("username", cUser.username);
+          localStorage.setItem("color", cUser.color);
+        } else {
+          localStorage.removeItem("username");
+          localStorage.removeItem("color");
+          localStorage.removeItem("has_onboarded");
+        }
       }
     });
 
@@ -307,10 +335,25 @@ export default function Home() {
     });
 
     // Handle capture errors/cooldown rejections
-    newSocket.on("capture:rejected", ({ reason, timeLeft }) => {
+    newSocket.on("capture:rejected", ({ reason, timeLeft, tileId }) => {
       if (reason === "cooldown" && timeLeft) {
         soundManager.playError();
         triggerCooldown(timeLeft);
+      }
+
+      // Rollback optimistic update
+      if (tileId) {
+        const backup = optimisticBackups.current.get(tileId);
+        setGrid((prev) => {
+          const updated = { ...prev };
+          if (backup) {
+            updated[tileId] = backup;
+          } else {
+            delete updated[tileId];
+          }
+          return updated;
+        });
+        optimisticBackups.current.delete(tileId);
       }
     });
 
@@ -450,9 +493,31 @@ export default function Home() {
       soundManager.playError();
       return;
     }
-    if (socket) {
+    if (socket && currentUser) {
       soundManager.playCapture();
+      
+      // OPTIMISTIC UPDATE:
+      // Store the previous state of the tile (or null if unclaimed)
+      const prevTile = grid[tileId] ? { ...grid[tileId] } : null;
+      optimisticBackups.current.set(tileId, prevTile);
+
+      // Instantly paint the grid locally
+      setGrid((prev) => ({
+        ...prev,
+        [tileId]: {
+          ownerName: currentUser.username,
+          ownerColor: currentUser.color,
+          capturedAt: Date.now()
+        }
+      }));
+
+      // Emit capture event to server
       socket.emit("tile:capture", { tileId });
+
+      // Start local cooldown instantly
+      const currentMode = gameMode;
+      const cooldownSeconds = currentMode === "rapid" ? 0.5 : 5.0;
+      triggerCooldown(cooldownSeconds);
     }
   };
 
