@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
-import { Sparkles, BarChart3, ChevronDown } from "lucide-react";
+import { Sparkles, BarChart3 } from "lucide-react";
 import ProfileWidget from "@/components/ProfileWidget";
 import Leaderboard from "@/components/Leaderboard";
 import ActivityLog, { LogEvent } from "@/components/ActivityLog";
@@ -12,6 +12,7 @@ import EventWidget from "@/components/EventWidget";
 import GameModesWidget from "@/components/GameModesWidget";
 import { soundManager } from "@/components/SoundManager";
 import ChatWidget, { ChatMessage } from "@/components/ChatWidget";
+import OnboardingModal from "@/components/OnboardingModal";
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
 
@@ -53,8 +54,9 @@ export default function Home() {
   // Theme & Audio states
   const [darkMode, setDarkMode] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [isStatsCollapsed, setIsStatsCollapsed] = useState(true);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [hasOnboarded, setHasOnboarded] = useState(true);
+  const [serverErrorMessage, setServerErrorMessage] = useState("");
 
   // Quests/Achievements state
   const [quests, setQuests] = useState<Quest[]>([
@@ -71,7 +73,7 @@ export default function Home() {
     currentUserRef.current = currentUser;
   }, [currentUser]);
 
-  // Initialize Theme and Sounds on Mount
+  // Initialize Theme, Sounds, and Onboarding status on Mount
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -91,6 +93,9 @@ export default function Home() {
       setSoundEnabled(true);
       soundManager.setEnabled(true);
     }
+
+    const onboarded = localStorage.getItem("has_onboarded") === "true";
+    setHasOnboarded(onboarded);
   }, []);
 
   const toggleTheme = () => {
@@ -151,7 +156,18 @@ export default function Home() {
 
     // Initialize full state on join
     newSocket.on("init:state", ({ user, grid: initialGrid, onlineUsers: initialUsers, chatHistory }) => {
-      setCurrentUser(user);
+      // Check localStorage for previously saved profile
+      const savedName = localStorage.getItem("username");
+      const savedColor = localStorage.getItem("color");
+      const onboarded = localStorage.getItem("has_onboarded") === "true";
+      
+      let finalUser = user;
+      if (onboarded && savedName && savedColor) {
+        newSocket.emit("user:update", { username: savedName, color: savedColor });
+        finalUser = { ...user, username: savedName, color: savedColor };
+      }
+
+      setCurrentUser(finalUser);
       setGrid(initialGrid);
       setOnlineUsers(initialUsers);
       setCurrentRoom("global");
@@ -167,6 +183,13 @@ export default function Home() {
           timestamp: Date.now()
         }
       ]);
+    });
+
+    // Handle color rejection
+    newSocket.on("color:rejected", ({ reason, color }) => {
+      if (reason === "taken") {
+        setServerErrorMessage(`Color ${color.toUpperCase()} is already taken by another active player!`);
+      }
     });
 
     // Initialize state on joining private room
@@ -369,6 +392,22 @@ export default function Home() {
       }
 
       socket.emit("user:update", { username: profile.username, color: finalColor });
+      
+      // Save to localStorage
+      localStorage.setItem("username", profile.username);
+      localStorage.setItem("color", finalColor);
+    }
+  };
+
+  const handleOnboardingComplete = (username: string, color: string) => {
+    localStorage.setItem("username", username);
+    localStorage.setItem("color", color);
+    localStorage.setItem("has_onboarded", "true");
+    setHasOnboarded(true);
+    setServerErrorMessage("");
+    
+    if (socket) {
+      socket.emit("user:update", { username, color });
     }
   };
 
@@ -464,36 +503,32 @@ export default function Home() {
           onToggleTheme={toggleTheme}
           currentRoom={currentRoom}
           onLeaveRoom={handleLeaveRoom}
+          onlineUsers={onlineUsers}
         />
 
-        {/* stats widget */}
+        {/* 5. Activity log console - moved below user profile */}
+        <ActivityLog logs={logs} />
+
+        {/* stats widget - permanently expanded */}
         {currentUser && (
           <div className="neumorphic-raised p-6 space-y-4">
-            <div
-              onClick={() => setIsStatsCollapsed(!isStatsCollapsed)}
-              className="flex items-center justify-between cursor-pointer select-none"
-            >
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-secondary" />
-                <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
-                  My Statistics
-                </h3>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${!isStatsCollapsed ? "rotate-180" : ""}`} />
+            <div className="flex items-center gap-2 border-b border-outline/35 pb-2">
+              <BarChart3 className="w-5 h-5 text-secondary" />
+              <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
+                My Statistics
+              </h3>
             </div>
 
-            {!isStatsCollapsed && (
-              <div className="pt-3 border-t border-outline/35 grid grid-cols-2 gap-4">
-                <div className="neumorphic-item-pressed p-3 rounded-2xl flex flex-col items-center justify-center">
-                  <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase">Pixels Owned</span>
-                  <span className="text-base font-black text-primary mt-1">{myClaimedCount}</span>
-                </div>
-                <div className="neumorphic-item-pressed p-3 rounded-2xl flex flex-col items-center justify-center">
-                  <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-zinc-500 uppercase">Board Domination</span>
-                  <span className="text-base font-black text-secondary mt-1">{dominancePct}%</span>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="neumorphic-item-pressed p-3 rounded-2xl flex flex-col items-center justify-center">
+                <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-zinc-550 uppercase">Pixels Owned</span>
+                <span className="text-base font-black text-primary mt-1">{myClaimedCount}</span>
               </div>
-            )}
+              <div className="neumorphic-item-pressed p-3 rounded-2xl flex flex-col items-center justify-center">
+                <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-zinc-550 uppercase">Board Domination</span>
+                <span className="text-base font-black text-secondary mt-1">{dominancePct}%</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -511,9 +546,6 @@ export default function Home() {
 
         {/* 4. Game Modes Selection Display */}
         <GameModesWidget activeMode={gameMode} />
-
-        {/* 5. Activity log console */}
-        <ActivityLog logs={logs} />
       </aside>
 
       {/* 2. CENTER PLAYGROUND - Fixed viewport on desktop */}
@@ -541,6 +573,17 @@ export default function Home() {
           onSendMessage={handleSendMessage}
         />
       </aside>
+
+      {!hasOnboarded && (
+        <OnboardingModal
+          onlineUsers={onlineUsers}
+          onComplete={handleOnboardingComplete}
+          initialName={currentUser?.username}
+          initialColor={currentUser?.color}
+          errorMessage={serverErrorMessage}
+          clearError={() => setServerErrorMessage("")}
+        />
+      )}
 
     </div>
   );

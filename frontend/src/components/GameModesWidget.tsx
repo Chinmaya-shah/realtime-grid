@@ -1,15 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { Gamepad2, Swords, UserPlus, Flame, ChevronDown } from "lucide-react";
+import React from "react";
+import { Gamepad2, Swords, UserPlus, Flame } from "lucide-react";
 
 interface GameModesWidgetProps {
   activeMode: string;
 }
 
 export default function GameModesWidget({ activeMode }: GameModesWidgetProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
   const modes = [
     {
       id: "classic",
@@ -43,60 +41,52 @@ export default function GameModesWidget({ activeMode }: GameModesWidgetProps) {
 
   return (
     <div className="neumorphic-raised p-6 space-y-4">
-      {/* Clickable Header */}
-      <div
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="flex items-center justify-between cursor-pointer select-none"
-      >
-        <div className="flex items-center gap-2">
-          <Gamepad2 className="w-5 h-5 text-secondary" />
-          <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
-            Game Modes Arena
-          </h3>
-        </div>
-        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${!isCollapsed ? "rotate-180" : ""}`} />
+      {/* Static Header */}
+      <div className="flex items-center gap-2 border-b border-outline/35 pb-2">
+        <Gamepad2 className="w-5 h-5 text-secondary" />
+        <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
+          Game Modes Arena
+        </h3>
       </div>
 
-      {/* Collapsible Content */}
-      {!isCollapsed && (
-        <div className="pt-3 border-t border-outline/35 space-y-3">
-          {modes.map((m) => {
-            const Icon = m.icon;
-            const isActive = activeMode === m.id;
+      {/* Permanently Visible Content */}
+      <div className="space-y-3">
+        {modes.map((m) => {
+          const Icon = m.icon;
+          const isActive = activeMode === m.id;
 
-            return (
-              <div
-                key={m.id}
-                className={`p-3 rounded-2xl border transition-all duration-300 flex gap-3 items-start ${
-                  isActive
-                    ? "border-secondary/40 bg-secondary/[0.03] scale-102 shadow-sm"
-                    : "border-outline bg-surface/30 opacity-75 hover:opacity-100"
-                }`}
-              >
-                {/* Icon badge */}
-                <div className={`p-2 rounded-xl shrink-0 ${m.color}`}>
-                  <Icon className="w-4 h-4" />
-                </div>
-
-                {/* Detail */}
-                <div className="flex-1 space-y-0.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-primary uppercase">{m.name}</span>
-                    {isActive && (
-                      <span className="text-[8px] font-mono font-black bg-secondary text-white px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[9.5px] leading-relaxed text-slate-400 dark:text-zinc-500 font-bold">
-                    {m.desc}
-                  </p>
-                </div>
+          return (
+            <div
+              key={m.id}
+              className={`p-3 rounded-2xl border transition-all duration-300 flex gap-3 items-start ${
+                isActive
+                  ? "border-secondary/40 bg-secondary/[0.03] scale-102 shadow-sm"
+                  : "border-outline bg-surface/30 opacity-75 hover:opacity-100"
+              }`}
+            >
+              {/* Icon badge */}
+              <div className={`p-2 rounded-xl shrink-0 ${m.color}`}>
+                <Icon className="w-4 h-4" />
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* Detail */}
+              <div className="flex-1 space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black text-primary uppercase">{m.name}</span>
+                  {isActive && (
+                    <span className="text-[8px] font-mono font-black bg-secondary text-white px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-[9.5px] leading-relaxed text-slate-400 dark:text-zinc-500 font-bold">
+                  {m.desc}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
