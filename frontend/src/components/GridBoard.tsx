@@ -33,7 +33,7 @@ const GridCell = React.memo(function GridCell({
 
   return (
     <div
-      onClick={() => onClick(tileId)}
+      onPointerUp={() => onClick(tileId)}
       style={{
         backgroundColor: isCaptured ? ownerColor : undefined,
         boxShadow: isCaptured
