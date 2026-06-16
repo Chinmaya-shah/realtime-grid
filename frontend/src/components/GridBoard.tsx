@@ -134,10 +134,10 @@ export default function GridBoard({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
-    // If mouse moved more than 5px from starting click position, mark as drag
+    // If mouse moved more than 15px from starting click position, mark as drag
     const dx = Math.abs(e.clientX - mouseDownPos.current.x);
     const dy = Math.abs(e.clientY - mouseDownPos.current.y);
-    if (dx > 5 || dy > 5) {
+    if (dx > 15 || dy > 15) {
       hasMovedRef.current = true;
     }
     setOffset({
@@ -165,7 +165,7 @@ export default function GridBoard({
     const touch = e.touches[0];
     const dx = Math.abs(touch.clientX - mouseDownPos.current.x);
     const dy = Math.abs(touch.clientY - mouseDownPos.current.y);
-    if (dx > 8 || dy > 8) {
+    if (dx > 20 || dy > 20) {
       hasMovedRef.current = true;
     }
     setOffset({
