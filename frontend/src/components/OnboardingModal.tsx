@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Sparkles, Check, Lock, Palette, HelpCircle, ArrowRight, Shield, RefreshCw, Eye, Move } from "lucide-react";
+import { User, Sparkles, Check, Lock, Palette, HelpCircle, ArrowRight, Shield, RefreshCw, Eye, Move, X } from "lucide-react";
 
 interface OnboardingModalProps {
   onlineUsers: Array<{ id: string; username: string; color: string }>;
@@ -10,6 +10,7 @@ interface OnboardingModalProps {
   initialColor?: string;
   errorMessage?: string;
   clearError?: () => void;
+  onClose?: () => void;
 }
 
 const COLOR_OPTIONS = [
@@ -31,7 +32,8 @@ export default function OnboardingModal({
   initialName = "",
   initialColor = "",
   errorMessage = "",
-  clearError
+  clearError,
+  onClose
 }: OnboardingModalProps) {
   const [step, setStep] = useState<1 | 2>(1); // Step 1: How to Play, Step 2: Profile Customize
   const [username, setUsername] = useState("");
@@ -126,7 +128,17 @@ export default function OnboardingModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-4 select-none">
-      <div className="shadow-2xl p-8 max-w-lg w-full mx-4 space-y-6 bg-surface border border-outline/10 text-foreground rounded-3xl animate-in fade-in zoom-in-95 duration-250 flex flex-col max-h-[90vh] overflow-y-auto">
+      <div className="shadow-2xl p-8 max-w-lg w-full mx-4 space-y-6 bg-surface border border-outline/10 text-foreground rounded-3xl animate-in fade-in zoom-in-95 duration-250 flex flex-col max-h-[90vh] overflow-y-auto relative">
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1.5 rounded-xl border border-outline/35 text-slate-400 hover:text-primary transition-all cursor-pointer bg-surface/50 hover:scale-105 active:scale-95 z-10"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
         
         {/* Step Progress Indicators */}
         <div className="flex items-center justify-center gap-1.5 shrink-0">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Edit3, Check, Loader2, Settings, Sun, Moon, Volume2, VolumeX, LogOut, Palette, Lock } from "lucide-react";
+import { User, Edit3, Check, Loader2, Settings, Sun, Moon, Volume2, VolumeX, LogOut, Palette, Lock, HelpCircle } from "lucide-react";
 
 interface ProfileWidgetProps {
   user: { id: string; username: string; color: string } | null;
@@ -16,6 +16,7 @@ interface ProfileWidgetProps {
   onToggleTheme: () => void;
   currentRoom: string;
   onLeaveRoom: () => void;
+  onShowHelp: () => void;
   
   // Color uniqueness check
   onlineUsers: Array<{ id: string; username: string; color: string }>;
@@ -45,6 +46,7 @@ export default function ProfileWidget({
   onToggleTheme,
   currentRoom,
   onLeaveRoom,
+  onShowHelp,
   onlineUsers
 }: ProfileWidgetProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -134,19 +136,40 @@ export default function ProfileWidget({
           </span>
         </div>
 
-        {/* User Settings Dropdown Trigger */}
-        <div className="relative" ref={dropdownRef}>
+        {/* Help Button and User Settings Dropdown Trigger */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setSettingsOpen(!settingsOpen)}
-            className="px-2.5 py-1.5 rounded-xl border border-outline text-[10px] font-black uppercase tracking-wider text-primary shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer neumorphic-button bg-surface/50"
+            type="button"
+            onClick={onShowHelp}
+            className="p-1.5 rounded-xl border border-outline text-primary shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer neumorphic-button bg-surface/50"
+            title="How to Play / Rules Guide"
           >
-            <Settings className="w-3.5 h-3.5 text-slate-500" />
-            <span>Settings</span>
+            <HelpCircle className="w-4 h-4 text-slate-500 hover:text-secondary transition-colors" />
           </button>
+
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              className="px-2.5 py-1.5 rounded-xl border border-outline text-[10px] font-black uppercase tracking-wider text-primary shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-1 cursor-pointer neumorphic-button bg-surface/50"
+            >
+              <Settings className="w-3.5 h-3.5 text-slate-500" />
+              <span>Settings</span>
+            </button>
 
           {/* Styled Floating Neumorphic Dropdown */}
           {settingsOpen && (
             <div className="absolute right-0 mt-2.5 w-48 rounded-2xl border border-outline neumorphic-item p-2 z-50 space-y-1 bg-surface shadow-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  onShowHelp();
+                  setSettingsOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[11px] font-black uppercase text-primary hover:text-secondary rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all text-left cursor-pointer"
+              >
+                <HelpCircle className="w-4 h-4 text-secondary" />
+                <span>How to Play</span>
+              </button>
               <button
                 onClick={() => {
                   onToggleTheme();
@@ -203,6 +226,7 @@ export default function ProfileWidget({
           )}
         </div>
       </div>
+    </div>
 
       {/* Profile Name Info Row */}
       <div className="flex items-center justify-between gap-3">

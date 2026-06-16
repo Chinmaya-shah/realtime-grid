@@ -56,6 +56,7 @@ export default function Home() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [hasOnboarded, setHasOnboarded] = useState(true);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [serverErrorMessage, setServerErrorMessage] = useState("");
 
   // Quests/Achievements state
@@ -511,6 +512,7 @@ export default function Home() {
           onToggleTheme={toggleTheme}
           currentRoom={currentRoom}
           onLeaveRoom={handleLeaveRoom}
+          onShowHelp={() => setShowHelpModal(true)}
           onlineUsers={onlineUsers}
         />
 
@@ -582,14 +584,18 @@ export default function Home() {
         />
       </aside>
 
-      {!hasOnboarded && (
+      {(!hasOnboarded || showHelpModal) && (
         <OnboardingModal
           onlineUsers={onlineUsers}
-          onComplete={handleOnboardingComplete}
+          onComplete={(username, color) => {
+            handleOnboardingComplete(username, color);
+            setShowHelpModal(false);
+          }}
           initialName={currentUser?.username}
           initialColor={currentUser?.color}
           errorMessage={serverErrorMessage}
           clearError={() => setServerErrorMessage("")}
+          onClose={showHelpModal ? () => setShowHelpModal(false) : undefined}
         />
       )}
 
