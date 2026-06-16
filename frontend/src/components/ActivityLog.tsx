@@ -36,13 +36,13 @@ export default function ActivityLog({ logs }: ActivityLogProps) {
 
       {/* Permanently Visible Content */}
       <div className="space-y-4">
-        {/* Sunken Dark Terminal Console */}
+        {/* Sunken Light Terminal Console */}
         <div
           ref={containerRef}
-          className="space-y-2.5 h-[180px] overflow-y-auto font-mono text-[10px] leading-relaxed p-4 rounded-2xl neumorphic-item-pressed !bg-slate-950 dark:!bg-black text-slate-300 border border-outline/30"
+          className="space-y-2.5 h-[180px] overflow-y-auto font-mono text-[10px] leading-relaxed p-4 rounded-2xl neumorphic-item-pressed !bg-white dark:!bg-zinc-900 text-slate-700 dark:text-slate-300 border border-outline/30"
         >
           {logs.length === 0 ? (
-            <div className="text-center py-16 text-slate-500 font-bold italic">
+            <div className="text-center py-16 text-slate-400 dark:text-slate-500 font-bold italic">
               &gt; Waiting for activity signals...
             </div>
           ) : (
@@ -56,17 +56,17 @@ export default function ActivityLog({ logs }: ActivityLogProps) {
               return (
                 <div
                   key={idx}
-                  className="flex items-start gap-1.5 border-b border-white/5 pb-1 last:border-0"
+                  className="flex items-start gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1 last:border-0"
                 >
-                  <Clock className="w-3 h-3 text-slate-600 shrink-0 mt-[1.5px]" />
-                  <span className="text-emerald-500 shrink-0 select-none font-bold">
+                  <Clock className="w-3 h-3 text-slate-400 dark:text-slate-500 shrink-0 mt-[1.5px]" />
+                  <span className="text-emerald-600 dark:text-emerald-400 shrink-0 select-none font-bold">
                     [{timeString}]
                   </span>
-                  <span className="flex-1 text-slate-300">
+                  <span className="flex-1 text-slate-700 dark:text-slate-350">
                     <strong style={{ color: log.color }} className="font-extrabold">
                       {log.username}
                     </strong>{" "}
-                    <span className="font-medium text-slate-300">{log.message}</span>
+                    <span className="font-medium text-slate-650 dark:text-slate-300">{log.message}</span>
                   </span>
                 </div>
               );
