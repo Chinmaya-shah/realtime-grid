@@ -292,7 +292,7 @@ export default function ProfileWidget({
                 title={isTaken ? "Taken by another player" : c}
               >
                 {isSelected && <Check className="w-3 text-white stroke-[3px]" />}
-                {isTaken && <Lock className="w-2.5 text-white/80 stroke-[2.5px]" />}
+                {isTaken && <Lock className="w-2.5 text-black stroke-[2.5px]" />}
               </button>
             );
           })}

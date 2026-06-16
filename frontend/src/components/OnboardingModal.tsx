@@ -207,7 +207,7 @@ export default function OnboardingModal({
                     title={isTaken ? "Already selected by another player" : c}
                   >
                     {isSelected && <Check className="w-3.5 text-white stroke-[3px]" />}
-                    {isTaken && <Lock className="w-3 text-white/70 stroke-[2.5px]" />}
+                    {isTaken && <Lock className="w-3 text-black stroke-[2.5px]" />}
                   </button>
                 );
               })}
