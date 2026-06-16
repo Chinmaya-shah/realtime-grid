@@ -127,11 +127,11 @@ export default function OnboardingModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 backdrop-blur-md p-4 select-none">
-      <div className="neumorphic-raised p-8 max-w-md w-full mx-4 space-y-6 bg-surface border border-outline/10 text-foreground animate-in fade-in duration-300">
+      <div className="shadow-2xl p-8 max-w-md w-full mx-4 space-y-6 bg-surface border border-outline/10 text-foreground animate-in fade-in duration-300">
         
         {/* Title */}
         <div className="text-center space-y-2">
-          <div className="inline-flex w-12 h-12 rounded-2xl bg-secondary items-center justify-center text-white shadow-lg neumorphic-orange-raised mx-auto">
+          <div className="inline-flex w-12 h-12 rounded-2xl bg-secondary items-center justify-center text-white shadow-md shadow-secondary/20 mx-auto">
             <Sparkles className="w-6 h-6 animate-pulse" />
           </div>
           <h2 className="text-xl font-black uppercase tracking-tight font-display mt-2">
