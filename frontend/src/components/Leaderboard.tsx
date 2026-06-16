@@ -33,14 +33,14 @@ export default function Leaderboard({ grid, onlineUsers }: LeaderboardProps) {
   return (
     <div className="neumorphic-raised p-6 flex flex-col flex-grow min-h-[250px] lg:min-h-[42%] overflow-hidden relative">
       {/* Fixed Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-outline/35 shrink-0 select-none">
-        <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-secondary animate-bounce" />
-          <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-outline/35 shrink-0 select-none">
+        <div className="flex items-center gap-2 min-w-0">
+          <Trophy className="w-5 h-5 text-secondary animate-bounce shrink-0" />
+          <h3 className="text-sm font-extrabold text-primary uppercase tracking-wider truncate">
             Leaderboard
           </h3>
         </div>
-        <span className="text-[10px] font-mono font-black bg-secondary/15 text-secondary px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-secondary/20 shadow-sm">
+        <span className="text-[10px] font-mono font-black bg-secondary/15 text-secondary px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-secondary/20 shadow-sm shrink-0 whitespace-nowrap">
           {totalCaptured}/{totalPossible} CLAIMED
         </span>
       </div>
