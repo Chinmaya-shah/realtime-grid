@@ -100,6 +100,22 @@ function getRandomPaletteColor() {
   return COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
 }
 
+function getUniqueRandomColor(activeUsersMap) {
+  const activeColors = new Set(Array.from(activeUsersMap.values()).map(u => u.color.toLowerCase()));
+  // Try to find an unused color in the palette first
+  const availablePalette = COLOR_PALETTE.filter(c => !activeColors.has(c.toLowerCase()));
+  if (availablePalette.length > 0) {
+    return availablePalette[Math.floor(Math.random() * availablePalette.length)];
+  }
+  // If all palette colors are taken, generate a random color that is not taken
+  while (true) {
+    const hex = "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    if (!activeColors.has(hex.toLowerCase())) {
+      return hex;
+    }
+  }
+}
+
 // Real-Time Socket Connections
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
@@ -107,7 +123,7 @@ io.on("connection", (socket) => {
   // Create random user profile - initially in 'global' room
   const userId = Math.floor(100 + Math.random() * 900);
   const username = `Explorer-${userId}`;
-  const color = getRandomPaletteColor();
+  const color = getUniqueRandomColor(activeUsers);
   const userProfile = { username, color, lastCaptureTime: 0, roomId: "global" };
   
   activeUsers.set(socket.id, userProfile);
@@ -220,9 +236,54 @@ io.on("connection", (socket) => {
     const { username: newName, color: newColor } = data;
     const profile = activeUsers.get(socket.id);
     if (profile) {
-      if (newName) profile.username = newName.trim().substring(0, 16);
-      if (newColor) profile.color = newColor;
-      
+      let updatedName = profile.username;
+      if (newName) updatedName = newName.trim().substring(0, 16);
+
+      let updatedColor = profile.color;
+      if (newColor && newColor.toLowerCase() !== profile.color.toLowerCase()) {
+        // Check if this color is already taken by another user
+        const isColorTaken = Array.from(activeUsers.entries()).some(([id, u]) => {
+          return id !== socket.id && u.color.toLowerCase() === newColor.toLowerCase();
+        });
+        if (isColorTaken) {
+          socket.emit("color:rejected", { reason: "taken", color: newColor });
+          return;
+        }
+
+        const oldColor = profile.color;
+        updatedColor = newColor;
+
+        // Update all pre-occupied blocks owned by this username to the new color
+        db.run(
+          `UPDATE tiles SET ownerColor = ? WHERE ownerName = ?`,
+          [updatedColor, profile.username],
+          (err) => {
+            if (err) {
+              console.error("Failed to update tile colors in DB:", err.message);
+            }
+          }
+        );
+
+        // Update memory cache and broadcast to all rooms
+        gridCache.forEach((value, key) => {
+          if (value.ownerName.toLowerCase() === profile.username.toLowerCase()) {
+            value.ownerColor = updatedColor;
+
+            // Parse Namespaced ID
+            const parts = key.split(":");
+            const roomId = parts[0];
+            const tileId = parts[1] || parts[0];
+
+            io.to(roomId).emit("tile:updated", {
+              tileId,
+              ...value
+            });
+          }
+        });
+      }
+
+      profile.username = updatedName;
+      profile.color = updatedColor;
       activeUsers.set(socket.id, profile);
       
       // Broadcast updated profile to the current room
