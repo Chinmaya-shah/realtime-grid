@@ -184,7 +184,7 @@ export default function OnboardingModal({
             </div>
 
             {/* Default Color Palette Grid */}
-            <div className="flex flex-wrap gap-2.5 justify-center py-1">
+            <div className="grid grid-cols-5 gap-2.5 py-1">
               {COLOR_OPTIONS.map((c) => {
                 const isTaken = activeColors.has(c.toLowerCase());
                 const isSelected = !showCustomPicker && selectedColor.toLowerCase() === c.toLowerCase();
@@ -199,7 +199,7 @@ export default function OnboardingModal({
                       handleSelectColor(c);
                     }}
                     style={{ backgroundColor: c }}
-                    className={`w-6.5 h-6.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center border relative shadow-sm hover:scale-110 active:scale-90 ${
+                    className={`w-full aspect-square rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center border relative shadow-sm hover:scale-110 active:scale-90 ${
                       isSelected
                         ? "ring-2 ring-secondary scale-105 border-transparent"
                         : "border-outline cell-embossed"

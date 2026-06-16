@@ -272,7 +272,7 @@ export default function ProfileWidget({
         </div>
 
         {/* Standard Palette Colors */}
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-5 gap-2.5">
           {COLOR_OPTIONS.map((c) => {
             const isTaken = activeColors.has(c.toLowerCase());
             const isSelected = !showCustomPicker && user.color.toLowerCase() === c.toLowerCase();
@@ -286,7 +286,7 @@ export default function ProfileWidget({
                   handleColorSelect(c);
                 }}
                 style={{ backgroundColor: c }}
-                className={`w-5.5 h-5.5 rounded-lg transition-transform hover:scale-115 active:scale-90 cursor-pointer flex items-center justify-center border relative shadow-sm ${
+                className={`w-full aspect-square rounded-lg transition-transform hover:scale-110 active:scale-90 cursor-pointer flex items-center justify-center border relative shadow-sm ${
                   isSelected ? "ring-2 ring-secondary scale-105 border-transparent" : "border-outline cell-embossed"
                 } ${isTaken ? "opacity-30 cursor-not-allowed scale-95" : ""}`}
                 title={isTaken ? "Taken by another player" : c}
