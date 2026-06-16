@@ -77,8 +77,7 @@ export default function Home() {
   // Initialize Theme, Sounds, and Onboarding status on Mount
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+    if (savedTheme === "dark") {
       setDarkMode(true);
       document.documentElement.classList.add("dark");
     } else {
