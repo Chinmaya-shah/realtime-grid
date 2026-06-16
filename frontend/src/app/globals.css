@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: var(--foreground);
+  --color-on-primary: var(--background);
+  --color-secondary: #ff4b2b;
+  --color-on-secondary: #ffffff;
+  --color-background: var(--background);
+  --color-on-background: var(--foreground);
+  --color-surface: var(--surface);
+  --color-outline: var(--outline);
+}
+
+:root {
+  --background: #e0e0e0; /* Custom Neumorphic light grey base */
+  --foreground: #1e293b;
+  --surface: #e0e0e0;
+  --outline: #0f172a;
+  
+  --shadow-dark: #bebebe;
+  --shadow-light: #ffffff;
+  
+  --shadow-neumorphic-raised: 20px 20px 60px var(--shadow-dark), -20px -20px 60px var(--shadow-light);
+  --shadow-neumorphic-pressed: inset 10px 10px 25px var(--shadow-dark), inset -10px -10px 25px var(--shadow-light);
+  --shadow-neumorphic-orange-raised: 6px 6px 12px rgba(255, 75, 43, 0.15), -6px -6px 12px var(--shadow-light);
+  
+  --shadow-cell-embossed: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  --shadow-cell-pressed: inset 2px 2px 4px rgba(0, 0, 0, 0.12), inset -2px -2px 4px var(--shadow-light);
+}
+
+.dark {
+  --background: #18181b; /* Soft dark slate base */
+  --foreground: #f4f4f5;
+  --surface: #18181b;
+  --outline: rgba(255, 255, 255, 0.02);
+  
+  --shadow-dark: #0c0c0d;
+  --shadow-light: #242429;
+  
+  --shadow-neumorphic-raised: 20px 20px 60px var(--shadow-dark), -20px -20px 60px var(--shadow-light);
+  --shadow-neumorphic-pressed: inset 10px 10px 25px var(--shadow-dark), inset -10px -10px 25px var(--shadow-light);
+  --shadow-neumorphic-orange-raised: 6px 6px 12px rgba(255, 75, 43, 0.22), -6px -6px 12px var(--shadow-light);
+  
+  --shadow-cell-embossed: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+  --shadow-cell-pressed: inset 2px 2px 4px rgba(0, 0, 0, 0.45), inset -2px -2px 4px rgba(255, 255, 255, 0.03);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 100vw;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800 !important;
+  color: var(--foreground);
+}
+
+/* Neumorphic UI Classes */
+.neumorphic-raised {
+  background-color: var(--surface) !important;
+  box-shadow: var(--shadow-neumorphic-raised) !important;
+  border-radius: 12px !important; /* Small rounded card corners */
+}
+
+.neumorphic-pressed {
+  background-color: var(--surface) !important;
+  box-shadow: var(--shadow-neumorphic-pressed) !important;
+  border-radius: 12px !important; /* Small rounded card corners */
+}
+
+/* Prevent layout shift on scrollable sidebars */
+.scrollbar-stable {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+/* Medium-sized list items and inputs */
+.neumorphic-item {
+  background-color: var(--surface) !important;
+  box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light) !important;
+  border-radius: 16px !important; /* Medium item corners */
+}
+
+.neumorphic-item-pressed {
+  background-color: var(--surface) !important;
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light) !important;
+  border-radius: 16px !important; /* Medium item corners */
+}
+
+/* Small buttons and badges */
+.neumorphic-button {
+  background-color: var(--surface) !important;
+  box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light) !important;
+  border-radius: 12px !important; /* Small button corners */
+}
+
+.neumorphic-button-pressed {
+  background-color: var(--surface) !important;
+  box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light) !important;
+  border-radius: 12px !important; /* Small button corners */
+}
+
+.neumorphic-orange-raised {
+  box-shadow: var(--shadow-neumorphic-orange-raised);
+}
+
+/* Grid Cell neumorphism - Optimized for rendering performance */
+.cell-embossed {
+  box-shadow: var(--shadow-cell-embossed);
+  border: 1px solid #0f172a; /* Thin dark black border in light theme */
+  transition: background-color 0.15s ease, scale 0.15s ease;
+}
+
+.cell-pressed {
+  box-shadow: var(--shadow-cell-pressed);
+  border: 1px solid #0f172a; /* Thin dark black border in light theme */
+}
+
+.dark .cell-embossed {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark .cell-pressed {
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.grid-bg {
+  background-image: radial-gradient(var(--foreground) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.03;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #27272A;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff4b2b;
+}
+
+/* Cell Capture Pulse Animation */
+@keyframes capture-pulse {
+  0% {
+    transform: scale(0.9);
+    filter: brightness(1.4);
+  }
+  50% {
+    transform: scale(1.25);
+    filter: brightness(1.7);
+    box-shadow: 0 0 15px rgba(255, 75, 43, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.animate-capture {
+  animation: capture-pulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Active LED glossy bulb styles removed */
